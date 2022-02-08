@@ -71,11 +71,14 @@ public class FileRecordingAuditLog implements AuditLog {
         }
         long finalTime = System.currentTimeMillis();
 
-        auditLog.add(new AuditInfo(actionName,
+        boolean offerSucceeded = auditLog.offer(new AuditInfo(actionName,
                 finalTime - startTime,
                 error,
                 exception));
 
+        if (!offerSucceeded) {
+            LOG.warn("Audit log exceeded capacity on {}", actionName);
+        }
         //Rethrow after catching.
         if (exception != null) {
             throw exception;
@@ -104,8 +107,9 @@ public class FileRecordingAuditLog implements AuditLog {
                         }
                     });
 
+        } finally {
+            auditLog.clear();
         }
-
     }
 
     /**
