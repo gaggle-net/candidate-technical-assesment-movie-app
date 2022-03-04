@@ -92,12 +92,27 @@ public class SQLCrewRepository implements CrewRepository {
         final Map<String, Object> varsMap = new HashMap<String, Object>();
         varsMap.put("personid", personId);
 
-
+        int rowIndex = 1;
         final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, varsMap);
+        //int colCount = rs.getMetaData().getColumnCount();
+        //Map<Integer, Map<String, Object>> mapOfResults = new HashMap<Integer, Map<String, Object>>();
+        int failedRecordRetrievals = 0;
+
         while (rs.next()) {
+            //Map<String, Object> columnValueMap = new HashMap<String, Object>();
+
+            long movieId = -1;
             try {
+                //for (int i = 1; i <= colCount; i++) {
+                //    columnValueMap.put(rs.getMetaData().getColumnLabel(i), rs.getObject(i));
+                //}
+
+                //mapOfResults.put(rowIndex, columnValueMap);
+                //rowIndex++;
+
                 final MovieRoleTuple current = new MovieRoleTuple();
-                final long movieId = rs.getInt("movie");
+                movieId = rs.getLong("movie");
+
                 LOG.info("finding movieid={}", movieId);
                 final Optional<Movie> movie = movieRepository.findById(movieId);
 
@@ -107,10 +122,13 @@ public class SQLCrewRepository implements CrewRepository {
                     jobs.add(current);
                 }
             } catch (Exception se) {
-                LOG.debug("failed to find movie", se);
+                LOG.error("failed to find movie: [{}]", movieId, se);
+                //failedRecordRetrievals++;
                 //move on to the next movie
             }
         }
+
+        //LOG.info("Found [{}] crew results for the person with the id: [{}]. Failed to retrieve: [{}] records.", mapOfResults.size(), personId, failedRecordRetrievals);
 
         return result;
     }
