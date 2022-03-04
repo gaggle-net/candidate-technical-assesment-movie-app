@@ -3,7 +3,9 @@ package net.gaggle.challenge.data;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
 import net.gaggle.challenge.model.Resume;
+import net.gaggle.challenge.model.PersonRoleTuple;
 
+import java.util.HashMap;
 import java.util.Collection;
 
 /**
@@ -35,5 +37,12 @@ public interface CrewRepository {
      */
     Credits peopleFor(Long movieId);
 
-
+    /**
+     * returns a Map of every Person who has worked with a given person in any movie.
+     *
+     * @param personId The id of the person we are looking for the colleagues of.
+     * @param includeThemself whether the given person should be included in the results
+     * @return A Map of ids linked to the Person objects for people who worked with the given person. 
+     */
+    HashMap<Long, PersonRoleTuple> colleaguesOf(final Long personId, boolean includeThemself);
 }

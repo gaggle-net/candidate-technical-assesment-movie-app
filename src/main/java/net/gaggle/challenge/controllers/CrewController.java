@@ -4,6 +4,7 @@ import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
 import net.gaggle.challenge.model.Resume;
+import net.gaggle.challenge.model.PersonRoleTuple;
 import net.gaggle.challenge.services.AuditLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Collection;
 
 /**
@@ -87,5 +89,21 @@ public class CrewController {
         });
     }
 
-
+    /**
+     * Returns a person's {@link Resume}, listing all of the {@link net.gaggle.challenge.model.Movie}s they took port in
+     * and their {@link net.gaggle.challenge.model.CrewRole} in each movie.  With a Resume, the Person is only included once for the entire
+     * response, instead of one for each movie, as would be the case with a collection of {@link Crew} obects.
+     * <p>
+     *
+     * @param personId the unique ID of the person we want to know about.
+     * @return a fully-populated Resume.
+     */
+    @GetMapping("/colleagues/{personId}")
+    public HashMap<Long, PersonRoleTuple> colleaguesOf(@PathVariable final Long personId) {
+        return auditLog.auditAction("/crew/colleagues/by-id", () -> {
+            LOG.info("here come all the colleagues for person {}", personId);
+            final HashMap<Long, PersonRoleTuple> results = crewRepository.colleaguesOf(personId, false);
+            return results;
+        });
+    }
 }

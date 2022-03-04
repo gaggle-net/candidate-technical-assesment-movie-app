@@ -154,6 +154,73 @@ public class SQLCrewRepository implements CrewRepository {
         }
 
         return result;
+    }
 
+    // TODO: Rewrite this to use a better SQL query. (Seriously, just do a series of joins...)
+    @Override
+    public HashMap<Long, PersonRoleTuple> colleaguesOf(final Long personId, boolean includeThemself) {
+        Set<Long> idsOfFilms = new HashSet<>();
+        final HashMap<Long, PersonRoleTuple> colleagues = new HashMap<>();
+
+        final Optional<Person> person = personRepository.findById(personId);
+        if (!person.isPresent()) {
+            LOG.error("Failed to retrieve person with id: [{}] from the database. No colleagues can be found.", personId);
+            return colleagues;
+        }
+
+        final Map<String, Object> personVarsMap = new HashMap<String, Object>();
+        personVarsMap.put("personid", personId);
+
+        int rowIndex = 1;
+        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, personVarsMap);
+
+        while (rs.next()) {
+            long movieId = -1;
+            try {
+                final MovieRoleTuple current = new MovieRoleTuple();
+                movieId = rs.getLong("movie");
+
+                LOG.info("finding movieid={}", movieId);
+                final Optional<Movie> movie = movieRepository.findById(movieId);
+
+                if (movie.isPresent()) {
+                    idsOfFilms.add(movieId);
+                }
+            } catch (Exception se) {
+                LOG.error("failed to find movie: [{}]", movieId, se);
+            }
+        }
+
+        for(Long currentId: idsOfFilms) {
+            final Map<String, Object> filmVarsMap = new HashMap<String, Object>();
+            filmVarsMap.put("movieid", currentId);
+
+            final SqlRowSet personRowSet = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_MOVIE, filmVarsMap);
+            while (personRowSet.next()) {
+                try {
+                    final PersonRoleTuple current = new PersonRoleTuple();
+
+                    final long colleagueId = personRowSet.getLong("person");
+                    if(colleagues.containsKey(colleagueId) == false) {
+                        LOG.info("finding person={}", colleagueId);
+                        final Optional<Person> currentColleague = personRepository.findById(colleagueId);
+                        if (currentColleague.isPresent()) {
+                            current.setPerson(currentColleague.get());
+                            current.setRole(CrewRole.valueOf(personRowSet.getString("role")));
+                            colleagues.put(colleagueId, current);
+                        }
+                    }
+                } catch (Exception se) {
+                    LOG.debug("failed to find person", se);
+                    //move on to the next person
+                }
+            }
+        }
+
+        if(includeThemself == false) {
+            colleagues.remove(personId);
+        }
+
+        return colleagues;
     }
 }
