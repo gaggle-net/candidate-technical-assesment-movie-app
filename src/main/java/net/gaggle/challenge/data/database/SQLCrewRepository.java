@@ -92,12 +92,15 @@ public class SQLCrewRepository implements CrewRepository {
         final Map<String, Object> varsMap = new HashMap<String, Object>();
         varsMap.put("personid", personId);
 
-
+        int rowIndex = 1;
         final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, varsMap);
+
         while (rs.next()) {
+            long movieId = -1;
             try {
                 final MovieRoleTuple current = new MovieRoleTuple();
-                final long movieId = rs.getInt("movie");
+                movieId = rs.getLong("movie");
+
                 LOG.info("finding movieid={}", movieId);
                 final Optional<Movie> movie = movieRepository.findById(movieId);
 
@@ -107,8 +110,7 @@ public class SQLCrewRepository implements CrewRepository {
                     jobs.add(current);
                 }
             } catch (Exception se) {
-                LOG.debug("failed to find movie", se);
-                //move on to the next movie
+                LOG.error("failed to find movie: [{}]", movieId, se);
             }
         }
 
