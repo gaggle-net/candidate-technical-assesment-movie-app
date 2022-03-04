@@ -46,6 +46,10 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
+    /**
+     * Query to get all PERSON entities from any crew that the given person is included in.
+     */
+    private static final String QUERY_PERSONS_IN_MOVIES_FOR_PERSON = "SELECT DISTINCT person.id, person.name FROM crew JOIN person ON person.id=crew.person WHERE crew.movie IN (SELECT DISTINCT movie FROM crew WHERE crew.person = :personid)";
 
     /**
      * Where to go to deserialize Movie objects.
@@ -107,7 +111,7 @@ public class SQLCrewRepository implements CrewRepository {
                     jobs.add(current);
                 }
             } catch (Exception se) {
-                LOG.debug("failed to find movie", se);
+                LOG.error("failed to find movie", se);
                 //move on to the next movie
             }
         }
@@ -148,7 +152,7 @@ public class SQLCrewRepository implements CrewRepository {
                     jobs.add(current);
                 }
             } catch (Exception se) {
-                LOG.debug("failed to find person", se);
+                LOG.error("failed to find person", se);
                 //move on to the next person
             }
         }
@@ -156,64 +160,19 @@ public class SQLCrewRepository implements CrewRepository {
         return result;
     }
 
-    // TODO: Rewrite this to use a better SQL query. (Seriously, just do a series of joins...)
     @Override
-    public HashMap<Long, PersonRoleTuple> colleaguesOf(final Long personId, boolean includeThemself) {
-        Set<Long> idsOfFilms = new HashSet<>();
-        final HashMap<Long, PersonRoleTuple> colleagues = new HashMap<>();
+    public HashMap<Long, String> colleaguesOf(final Long personId, boolean includeThemself) {
+        final HashMap<Long, String> colleagues = new HashMap<>();
+        final Map<String, Object> filmVarsMap = new HashMap<String, Object>();
+        filmVarsMap.put("personid", personId);
 
-        final Optional<Person> person = personRepository.findById(personId);
-        if (!person.isPresent()) {
-            LOG.error("Failed to retrieve person with id: [{}] from the database. No colleagues can be found.", personId);
-            return colleagues;
-        }
-
-        final Map<String, Object> personVarsMap = new HashMap<String, Object>();
-        personVarsMap.put("personid", personId);
-
-        int rowIndex = 1;
-        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, personVarsMap);
-
-        while (rs.next()) {
-            long movieId = -1;
+        final SqlRowSet personRowSet = jdbcTemplate.queryForRowSet(QUERY_PERSONS_IN_MOVIES_FOR_PERSON, filmVarsMap);
+        while (personRowSet.next()) {
             try {
-                final MovieRoleTuple current = new MovieRoleTuple();
-                movieId = rs.getLong("movie");
-
-                LOG.info("finding movieid={}", movieId);
-                final Optional<Movie> movie = movieRepository.findById(movieId);
-
-                if (movie.isPresent()) {
-                    idsOfFilms.add(movieId);
-                }
+                colleagues.put(personRowSet.getLong("id"), personRowSet.getString("name"));
             } catch (Exception se) {
-                LOG.error("failed to find movie: [{}]", movieId, se);
-            }
-        }
-
-        for(Long currentId: idsOfFilms) {
-            final Map<String, Object> filmVarsMap = new HashMap<String, Object>();
-            filmVarsMap.put("movieid", currentId);
-
-            final SqlRowSet personRowSet = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_MOVIE, filmVarsMap);
-            while (personRowSet.next()) {
-                try {
-                    final PersonRoleTuple current = new PersonRoleTuple();
-
-                    final long colleagueId = personRowSet.getLong("person");
-                    if(colleagues.containsKey(colleagueId) == false) {
-                        LOG.info("finding person={}", colleagueId);
-                        final Optional<Person> currentColleague = personRepository.findById(colleagueId);
-                        if (currentColleague.isPresent()) {
-                            current.setPerson(currentColleague.get());
-                            current.setRole(CrewRole.valueOf(personRowSet.getString("role")));
-                            colleagues.put(colleagueId, current);
-                        }
-                    }
-                } catch (Exception se) {
-                    LOG.debug("failed to find person", se);
-                    //move on to the next person
-                }
+                LOG.error("failed to find person", se);
+                //move on to the next person
             }
         }
 
@@ -221,6 +180,7 @@ public class SQLCrewRepository implements CrewRepository {
             colleagues.remove(personId);
         }
 
+        LOG.info("Found [{}] Person entities associated with films the given person [{}] worked on.", colleagues.size(), personId);
         return colleagues;
     }
 }

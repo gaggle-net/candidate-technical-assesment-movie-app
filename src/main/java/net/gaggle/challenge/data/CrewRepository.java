@@ -44,5 +44,5 @@ public interface CrewRepository {
      * @param includeThemself whether the given person should be included in the results
      * @return A Map of ids linked to the Person objects for people who worked with the given person. 
      */
-    HashMap<Long, PersonRoleTuple> colleaguesOf(final Long personId, boolean includeThemself);
+    HashMap<Long, String> colleaguesOf(final Long personId, boolean includeThemself);
 }

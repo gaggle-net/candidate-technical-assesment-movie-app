@@ -99,10 +99,10 @@ public class CrewController {
      * @return a fully-populated Resume.
      */
     @GetMapping("/colleagues/{personId}")
-    public HashMap<Long, PersonRoleTuple> colleaguesOf(@PathVariable final Long personId) {
+    public HashMap<Long, String> colleaguesOf(@PathVariable final Long personId) {
         return auditLog.auditAction("/crew/colleagues/by-id", () -> {
             LOG.info("here come all the colleagues for person {}", personId);
-            final HashMap<Long, PersonRoleTuple> results = crewRepository.colleaguesOf(personId, false);
+            final HashMap<Long, String> results = crewRepository.colleaguesOf(personId, false);
             return results;
         });
     }
