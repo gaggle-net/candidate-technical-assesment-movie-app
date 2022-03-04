@@ -94,22 +94,10 @@ public class SQLCrewRepository implements CrewRepository {
 
         int rowIndex = 1;
         final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, varsMap);
-        //int colCount = rs.getMetaData().getColumnCount();
-        //Map<Integer, Map<String, Object>> mapOfResults = new HashMap<Integer, Map<String, Object>>();
-        int failedRecordRetrievals = 0;
 
         while (rs.next()) {
-            //Map<String, Object> columnValueMap = new HashMap<String, Object>();
-
             long movieId = -1;
             try {
-                //for (int i = 1; i <= colCount; i++) {
-                //    columnValueMap.put(rs.getMetaData().getColumnLabel(i), rs.getObject(i));
-                //}
-
-                //mapOfResults.put(rowIndex, columnValueMap);
-                //rowIndex++;
-
                 final MovieRoleTuple current = new MovieRoleTuple();
                 movieId = rs.getLong("movie");
 
@@ -123,12 +111,8 @@ public class SQLCrewRepository implements CrewRepository {
                 }
             } catch (Exception se) {
                 LOG.error("failed to find movie: [{}]", movieId, se);
-                //failedRecordRetrievals++;
-                //move on to the next movie
             }
         }
-
-        //LOG.info("Found [{}] crew results for the person with the id: [{}]. Failed to retrieve: [{}] records.", mapOfResults.size(), personId, failedRecordRetrievals);
 
         return result;
     }
