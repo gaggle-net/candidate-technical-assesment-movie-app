@@ -46,6 +46,10 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
+    /**
+     * Query to get all PERSON entities from any crew that the given person is included in.
+     */
+    private static final String QUERY_PERSONS_IN_MOVIES_FOR_PERSON = "SELECT DISTINCT person.id, person.name FROM crew JOIN person ON person.id=crew.person WHERE crew.movie IN (SELECT DISTINCT movie FROM crew WHERE crew.person = :personid)";
 
     /**
      * Where to go to deserialize Movie objects.
@@ -107,7 +111,7 @@ public class SQLCrewRepository implements CrewRepository {
                     jobs.add(current);
                 }
             } catch (Exception se) {
-                LOG.debug("failed to find movie", se);
+                LOG.error("failed to find movie", se);
                 //move on to the next movie
             }
         }
@@ -148,12 +152,35 @@ public class SQLCrewRepository implements CrewRepository {
                     jobs.add(current);
                 }
             } catch (Exception se) {
-                LOG.debug("failed to find person", se);
+                LOG.error("failed to find person", se);
                 //move on to the next person
             }
         }
 
         return result;
+    }
 
+    @Override
+    public HashMap<Long, String> colleaguesOf(final Long personId, boolean includeThemself) {
+        final HashMap<Long, String> colleagues = new HashMap<>();
+        final Map<String, Object> filmVarsMap = new HashMap<String, Object>();
+        filmVarsMap.put("personid", personId);
+
+        final SqlRowSet personRowSet = jdbcTemplate.queryForRowSet(QUERY_PERSONS_IN_MOVIES_FOR_PERSON, filmVarsMap);
+        while (personRowSet.next()) {
+            try {
+                colleagues.put(personRowSet.getLong("id"), personRowSet.getString("name"));
+            } catch (Exception se) {
+                LOG.error("failed to find person", se);
+                //move on to the next person
+            }
+        }
+
+        if(includeThemself == false) {
+            colleagues.remove(personId);
+        }
+
+        LOG.info("Found [{}] Person entities associated with films the given person [{}] worked on.", colleagues.size(), personId);
+        return colleagues;
     }
 }
