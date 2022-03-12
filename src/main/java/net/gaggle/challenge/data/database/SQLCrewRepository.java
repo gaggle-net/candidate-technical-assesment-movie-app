@@ -14,6 +14,7 @@ import net.gaggle.challenge.model.Resume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.InvalidResultSetAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
@@ -97,7 +98,7 @@ public class SQLCrewRepository implements CrewRepository {
         while (rs.next()) {
             try {
                 final MovieRoleTuple current = new MovieRoleTuple();
-                final long movieId = rs.getInt("movie");
+                final long movieId = rs.getLong("movie");
                 LOG.info("finding movieid={}", movieId);
                 final Optional<Movie> movie = movieRepository.findById(movieId);
 
@@ -105,9 +106,11 @@ public class SQLCrewRepository implements CrewRepository {
                     current.setMovie(movie.get());
                     current.setRole(CrewRole.valueOf(rs.getString("role")));
                     jobs.add(current);
+                } else {
+                    LOG.warn("No movie found for id={} source from crew id={}", movieId, rs.getLong("id"));
                 }
-            } catch (Exception se) {
-                LOG.debug("failed to find movie", se);
+            } catch (InvalidResultSetAccessException se) {
+                LOG.error("failed to find movie", se);
                 //move on to the next movie
             }
         }
