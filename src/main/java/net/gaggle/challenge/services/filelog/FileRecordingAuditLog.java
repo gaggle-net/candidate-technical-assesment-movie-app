@@ -56,7 +56,7 @@ public class FileRecordingAuditLog implements AuditLog {
      */
     @Override
     public <T> T auditAction(final String actionName, final Supplier<T> action) {
-        LOG.debug("Beginning exceution of {}", actionName);
+        LOG.debug("Beginning execution of {}", actionName);
         long startTime = System.currentTimeMillis();
         boolean error = false;
         RuntimeException exception = null;
