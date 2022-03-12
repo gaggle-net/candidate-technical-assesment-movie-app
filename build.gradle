@@ -4,6 +4,7 @@ plugins {
 	id 'java'
 	id 'checkstyle'
 	id 'jacoco'
+	id 'io.gatling.gradle' version '3.6.1'
 }
 
 group = 'net.gaggle'
