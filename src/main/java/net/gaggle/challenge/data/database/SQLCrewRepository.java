@@ -1,11 +1,11 @@
 package net.gaggle.challenge.data.database;
 
+import lombok.RequiredArgsConstructor;
 import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.data.MovieRepository;
 import net.gaggle.challenge.data.PersonRepository;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
-import net.gaggle.challenge.model.CrewRole;
 import net.gaggle.challenge.model.Movie;
 import net.gaggle.challenge.model.MovieRoleTuple;
 import net.gaggle.challenge.model.Person;
@@ -14,20 +14,18 @@ import net.gaggle.challenge.model.Resume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.InvalidResultSetAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
+@RequiredArgsConstructor
 public class SQLCrewRepository implements CrewRepository {
 
     /**
@@ -51,25 +49,31 @@ public class SQLCrewRepository implements CrewRepository {
     /**
      * Where to go to deserialize Movie objects.
      */
-    @Autowired
-    private MovieRepository movieRepository;
+    private final MovieRepository movieRepository;
 
     /**
      * Where to go to deserialize Person objects.
      */
-    @Autowired
-    private PersonRepository personRepository;
+    private final PersonRepository personRepository;
 
     /**
      * Spring's interface for SQL.
      */
     private NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Autowired
-    public void setDataSource(final DataSource dataSource) {
-        this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-    }
+    private final MovieRoleRowMapper roleMapper;
 
+    @Autowired
+    public SQLCrewRepository(
+            final MovieRepository movieRepository,
+            final PersonRepository personRepository,
+            final DataSource dataSource
+    ) {
+        this.movieRepository = movieRepository;
+        this.personRepository = personRepository;
+        this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        this.roleMapper = new MovieRoleRowMapper(movieRepository);
+    }
 
     @Override
     public Collection<Crew> everything() {
@@ -78,85 +82,43 @@ public class SQLCrewRepository implements CrewRepository {
 
     @Override
     public Resume moviesFor(final Long personId) {
-        final Resume result = new Resume();
+
+        LOG.debug("Getting movies for personId={}", personId);
 
         final Optional<Person> person = personRepository.findById(personId);
         if (!person.isPresent()) {
-            return result;
+            return new Resume();
         }
-        result.setPerson(person.get());
-
-        final Set<MovieRoleTuple> jobs = new HashSet<>();
-        result.setJobs(jobs);
-
 
         final Map<String, Object> varsMap = new HashMap<String, Object>();
         varsMap.put("personid", personId);
 
+        final List<MovieRoleTuple> roles = jdbcTemplate
+                .query(QUERY_CREW_FOR_PERSON, varsMap, roleMapper);
 
-        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, varsMap);
-        while (rs.next()) {
-            try {
-                final MovieRoleTuple current = new MovieRoleTuple();
-                final long movieId = rs.getLong("movie");
-                LOG.info("finding movieid={}", movieId);
-                final Optional<Movie> movie = movieRepository.findById(movieId);
-
-                if (movie.isPresent()) {
-                    current.setMovie(movie.get());
-                    current.setRole(CrewRole.valueOf(rs.getString("role")));
-                    jobs.add(current);
-                } else {
-                    LOG.warn("No movie found for id={} source from crew id={}", movieId, rs.getLong("id"));
-                }
-            } catch (InvalidResultSetAccessException se) {
-                LOG.error("failed to find movie", se);
-                //move on to the next movie
-            }
-        }
-
-        return result;
+        return new Resume(
+                person.get(),
+                roles);
     }
 
     @Override
     public Credits peopleFor(final Long movieId) {
 
-        final Credits result = new Credits();
+        LOG.debug("Getting people for movieId={}", movieId);
 
         final Optional<Movie> movie = movieRepository.findById(movieId);
         if (!movie.isPresent()) {
-            return result;
+            return new Credits();
         }
-        result.setMovie(movie.get());
-
-        final Set<PersonRoleTuple> jobs = new HashSet<>();
-        result.setCrew(jobs);
-
 
         final Map<String, Object> varsMap = new HashMap<String, Object>();
         varsMap.put("movieid", movieId);
 
+        final List<PersonRoleTuple> roles = jdbcTemplate
+                .query(QUERY_CREW_FOR_MOVIE, varsMap, new PersonRoleRowMapper(personRepository));
 
-        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_MOVIE, varsMap);
-        while (rs.next()) {
-            try {
-                final PersonRoleTuple current = new PersonRoleTuple();
-
-                final long personId = rs.getLong("person");
-                LOG.info("finding person={}", personId);
-                final Optional<Person> person = personRepository.findById(personId);
-                if (person.isPresent()) {
-                    current.setPerson(person.get());
-                    current.setRole(CrewRole.valueOf(rs.getString("role")));
-                    jobs.add(current);
-                }
-            } catch (Exception se) {
-                LOG.debug("failed to find person", se);
-                //move on to the next person
-            }
-        }
-
-        return result;
-
+        return new Credits(
+                roles,
+                movie.get());
     }
 }

@@ -1,10 +1,17 @@
 package net.gaggle.challenge.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Collection;
 
 /**
  * Represents a single person's body of work.
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class Resume {
 
     /**
@@ -17,20 +24,4 @@ public class Resume {
      */
     private Collection<MovieRoleTuple> jobs;
 
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setPerson(final Person person) {
-        this.person = person;
-    }
-
-    public Collection<MovieRoleTuple> getJobs() {
-        return jobs;
-    }
-
-    public void setJobs(final Collection<MovieRoleTuple> jobs) {
-        this.jobs = jobs;
-    }
 }

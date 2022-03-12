@@ -4,6 +4,7 @@ plugins {
 	id 'java'
 	id 'checkstyle'
 	id 'jacoco'
+	id 'io.freefair.lombok' version '6.4.1'
 }
 
 group = 'net.gaggle'
@@ -23,6 +24,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	runtimeOnly 'com.h2database:h2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	compileOnly 'org.projectlombok:lombok:1.18.22'
+	annotationProcessor 'org.projectlombok:lombok:1.18.22'
 }
 
 test {

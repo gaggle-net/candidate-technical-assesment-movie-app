@@ -1,9 +1,20 @@
 package net.gaggle.challenge.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * A container holding what a person did for one movie.
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class Crew {
+
+    public static final String movieColumn = "movie";
+
+    public static final String personColumn = "person";
 
     /**
      * The Person who worked on the Movie.
@@ -20,28 +31,4 @@ public class Crew {
      */
     private CrewRole role;
 
-
-    public Movie getMovie() {
-        return movie;
-    }
-
-    public void setMovie(final Movie movie) {
-        this.movie = movie;
-    }
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setPerson(final Person person) {
-        this.person = person;
-    }
-
-    public CrewRole getRole() {
-        return role;
-    }
-
-    public void setRole(final CrewRole role) {
-        this.role = role;
-    }
 }

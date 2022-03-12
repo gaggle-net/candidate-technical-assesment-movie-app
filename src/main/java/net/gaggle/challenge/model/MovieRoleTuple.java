@@ -1,10 +1,17 @@
 package net.gaggle.challenge.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * Represnts a role in a given movie.  The {@link Person} who did this role is assumed to be in a containing {@link Resume} object.
  *
  * @see Resume
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class MovieRoleTuple {
 
     /**
@@ -17,20 +24,4 @@ public class MovieRoleTuple {
      */
     private CrewRole role;
 
-
-    public Movie getMovie() {
-        return movie;
-    }
-
-    public void setMovie(final Movie movie) {
-        this.movie = movie;
-    }
-
-    public CrewRole getRole() {
-        return role;
-    }
-
-    public void setRole(final CrewRole role) {
-        this.role = role;
-    }
 }

@@ -1,7 +1,14 @@
 package net.gaggle.challenge.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Collection;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class Credits {
 
     /**
@@ -13,19 +20,4 @@ public class Credits {
      */
     private Movie movie;
 
-    public Movie getMovie() {
-        return movie;
-    }
-
-    public void setMovie(final Movie movie) {
-        this.movie = movie;
-    }
-
-    public Collection<PersonRoleTuple> getCrew() {
-        return crew;
-    }
-
-    public void setCrew(final Collection<PersonRoleTuple> crew) {
-        this.crew = crew;
-    }
 }
