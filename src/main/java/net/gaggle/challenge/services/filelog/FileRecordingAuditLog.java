@@ -13,8 +13,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
@@ -31,7 +30,7 @@ public class FileRecordingAuditLog implements AuditLog {
      */
     private static final Logger LOG = LoggerFactory.getLogger(FileRecordingAuditLog.class);
 
-    private Queue<AuditInfo> auditLog = new LinkedBlockingQueue<>();
+    private BlockingQueue<AuditInfo> auditLog = new LinkedBlockingQueue<>();
 
     /**
      * Location to receive the audit info
@@ -92,18 +91,19 @@ public class FileRecordingAuditLog implements AuditLog {
     public void flushToDisk() throws IOException {
         LOG.info("Flushing Audit Log");
         //Make a copy before we flush to disk for thread safety
-        List<AuditInfo> itemsToFlushToDisk = new ArrayList<>(auditLog);
+        final ArrayList<AuditInfo> itemsToFlushToDisk = new ArrayList<>();
+        itemsToFlushToDisk.ensureCapacity(auditLog.size());
+        auditLog.drainTo(itemsToFlushToDisk);
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(targetFile))) {
-            new ArrayList<>(auditLog).stream()
-                    .forEach( (auditInfo) -> {
-                        try {
-                            osw.write(auditInfo.toString());
-                            osw.write('\n');
-                        } catch (IOException e) {
-                            LOG.error("Error writing audit log to disk!", e);
-                        }
-                    });
-
+            for(final AuditInfo auditInfo : itemsToFlushToDisk) {
+                try {
+                    osw.write(auditInfo.toString());
+                    osw.write('\n');
+                } catch(IOException e) {
+                    LOG.error("Error writing audit entry to disk!", e);
+                    throw e;
+                }
+            }
         }
 
     }
