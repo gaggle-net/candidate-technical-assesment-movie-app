@@ -3,6 +3,7 @@ package net.gaggle.challenge.controllers;
 import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
+import net.gaggle.challenge.model.RelationMap;
 import net.gaggle.challenge.model.Resume;
 import net.gaggle.challenge.services.AuditLog;
 import org.slf4j.Logger;
@@ -87,5 +88,19 @@ public class CrewController {
         });
     }
 
-
+    /**
+     * Returns a {@link RelationMap} listing all of the {@link net.gaggle.challenge.model.Person}s they worked with
+     * and the {@link net.gaggle.challenge.model.Movie}s they worked on together.
+     *
+     * @param personId The unique ID of the person we want to know about.
+     * @return A fully-populated RelationMap.
+     */
+    @GetMapping("/colleagues/{personId}")
+    public RelationMap colleaguesFor(@PathVariable final Long personId) {
+        return auditLog.auditAction("/crew/colleagues/by-id", () -> {
+            LOG.info("returning colleagues for person {}", personId);
+            final RelationMap results = crewRepository.colleaguesOf(personId);
+            return results;
+        });
+    }
 }

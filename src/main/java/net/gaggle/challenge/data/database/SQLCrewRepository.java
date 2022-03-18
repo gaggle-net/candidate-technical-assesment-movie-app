@@ -3,6 +3,7 @@ package net.gaggle.challenge.data.database;
 import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.data.MovieRepository;
 import net.gaggle.challenge.data.PersonRepository;
+import net.gaggle.challenge.model.Colleague;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
 import net.gaggle.challenge.model.CrewRole;
@@ -10,6 +11,7 @@ import net.gaggle.challenge.model.Movie;
 import net.gaggle.challenge.model.MovieRoleTuple;
 import net.gaggle.challenge.model.Person;
 import net.gaggle.challenge.model.PersonRoleTuple;
+import net.gaggle.challenge.model.RelationMap;
 import net.gaggle.challenge.model.Resume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,15 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
+
+    /**
+     * Query to find people who worked together
+     */
+    private static final String QUERY_COLLEAGUES_OF_PERSON = "select c.person, p.name, c.movie, m.title from crew c " +
+            "join movie m on m.id = c.movie " +
+            "join person p on p.id = c.person " +
+            "where movie in (select movie from crew where person = :personid) " +
+            "and person != :personid"; // Don't match the original Person with themselves
 
     /**
      * Where to go to deserialize Movie objects.
@@ -155,5 +166,54 @@ public class SQLCrewRepository implements CrewRepository {
 
         return result;
 
+    }
+
+    @Override
+    public RelationMap colleaguesOf(final Long personId) {
+        final RelationMap result = new RelationMap();
+
+        final Optional<Person> person = personRepository.findById(personId);
+        if (!person.isPresent()) {
+            return result;
+        }
+        result.setPerson(person.get());
+
+        final Set<Colleague> colleagues = new HashSet<>();
+        result.setColleagues(colleagues);
+
+        final Map<String, Object> varsMap = new HashMap<String, Object>();
+        varsMap.put("personid", personId);
+
+        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_COLLEAGUES_OF_PERSON, varsMap);
+
+        while (rs.next()) {
+            try {
+                final long colleagueId = rs.getLong("person");
+                Optional<Colleague> existing = colleagues.stream().filter(x -> x.getPerson().getId() == colleagueId).findFirst();
+
+                if(existing.isPresent()) {
+                    existing.get().getMovieTitles().add(rs.getString("title"));
+                } else {
+                    Colleague current = new Colleague();
+
+                    // Create and add the new colleague's details
+                    Person colleaguePerson = new Person();
+                    colleaguePerson.setId(rs.getLong("person"));
+                    colleaguePerson.setName(rs.getString("name"));
+                    current.setPerson(colleaguePerson);
+
+                    Collection<String> titles = new HashSet<>();
+                    titles.add(rs.getString("title"));
+                    current.setMovieTitles(titles);
+
+                    colleagues.add(current);
+                }
+            } catch (Exception se) {
+                LOG.debug("failed to read movie or person", se);
+                //move on to the next record
+            }
+        }
+
+        return result;
     }
 }
