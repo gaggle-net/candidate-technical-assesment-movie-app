@@ -94,7 +94,7 @@ public class FileRecordingAuditLog implements AuditLog {
         //Make a copy before we flush to disk for thread safety
         List<AuditInfo> itemsToFlushToDisk = new ArrayList<>(auditLog);
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(targetFile))) {
-            new ArrayList<>(auditLog).stream()
+            itemsToFlushToDisk.stream()
                     .forEach( (auditInfo) -> {
                         try {
                             osw.write(auditInfo.toString());
@@ -104,8 +104,10 @@ public class FileRecordingAuditLog implements AuditLog {
                         }
                     });
 
+        } finally {
+            // always clear out the log to avoid running out of space in the queue
+            auditLog.clear();
         }
-
     }
 
     /**
