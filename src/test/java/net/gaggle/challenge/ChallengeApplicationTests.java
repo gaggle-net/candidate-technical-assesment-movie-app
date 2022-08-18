@@ -69,4 +69,10 @@ class ChallengeApplicationTests {
 				.andExpect(content().string(containsString("Kane")));
 	}
 
+	@Test
+	public void findAPersonByID_Bug1701() throws Exception {
+		this.mockMvc.perform(get("/crew/person/1")).andDo(print()).andExpect(status().isOk())
+				.andExpect(content().string(containsString("Comic")));
+	}
+
 }
