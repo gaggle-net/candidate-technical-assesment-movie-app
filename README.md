@@ -46,5 +46,60 @@ FEATURE-1138
 Product would like an endpoint that shows all the other people a given person has worked with over their career.
 
 
+### Implementation
+
+The endpoint is `/crew/collaborations/:id` where `:id` is the unique identifier for a Person. Here are a couple of sample runs:
+
+```
+potlia@agni:/tmp $ curl -s localhost:8080/crew/collaborations/1 | jq
+{
+  "person": {
+    "id": 1,
+    "name": "Mark Hamill"
+  },
+  "collaborators": [
+    {
+      "id": 3,
+      "name": "Harrison Ford"
+    },
+    {
+      "id": 4,
+      "name": "Carrie Fisher"
+    }
+  ]
+}
+potlia@agni:/tmp $ curl -s localhost:8081/crew/collaborations/5 | jq
+{
+  "person": {
+    "id": 5,
+    "name": "John Belushi"
+  },
+  "collaborators": [
+    {
+      "id": 4,
+      "name": "Carrie Fisher"
+    }
+  ]
+}
+potlia@agni:/tmp $
+```
+
+### Unit Test
+
+The pertinent unit test is `findCollaboratorsForPersonId5`. Here is sample run:
+
+```
+potlia@agni:/tmp/candidate-technical-assesment-movie-app  (feature
+/feature-1138)$ ./gradlew  test --tests net.gaggle.challenge.ChallengeApplicationTests.findCollaboratorsForPersonId5
+Starting a Gradle Daemon, 1 busy and 1 stopped Daemons could not be reused, use --status for details
+
+> Task :test
+2022-08-18 12:01:52.523  INFO 10522 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2022-08-18 12:01:52.524  INFO 10522 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+BUILD SUCCESSFUL in 8s
+5 actionable tasks: 3 executed, 2 up-to-date
+potlia@agni:/tmp/candidate-technical-assesment-movie-app  (feature/feature-1138)$
+```
 
 

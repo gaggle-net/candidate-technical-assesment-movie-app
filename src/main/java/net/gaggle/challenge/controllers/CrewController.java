@@ -1,6 +1,7 @@
 package net.gaggle.challenge.controllers;
 
 import net.gaggle.challenge.data.CrewRepository;
+import net.gaggle.challenge.model.Collaboration;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
 import net.gaggle.challenge.model.Resume;
@@ -87,5 +88,21 @@ public class CrewController {
         });
     }
 
+    /**
+     * Returns a person's {@link Collaboration}, listing all the {@link net.gaggle.challenge.model.Person}s they worked
+     * with in various {@link net.gaggle.challenge.model.Movie}s.
+     * <p>
+     *
+     * @param personId the unique ID of the person we want to get the collaborators for.
+     * @return a Collaborations object
+     */
+    @GetMapping("/collaborations/{personId}")
+    public Collaboration collaboratedFor(@PathVariable final Long personId) {
+        return auditLog.auditAction("/crew/collaborations/by-id", () -> {
+            LOG.info("here come all the collaborations for person {}", personId);
+            final Collaboration results = crewRepository.collaboratedFor(personId);
+            return results;
+        });
+    }
 
 }
