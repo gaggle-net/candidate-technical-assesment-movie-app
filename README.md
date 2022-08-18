@@ -25,6 +25,23 @@ Report from a customer:
 
 QA confirmed by checking `GET /crew/person/1`
 
+### Resolution
+The movie id was read off as an `int` whereas the schema (and the data not returned by the REST endpoint) had values bigger than max int 2147483647. The fix is to read off the movie id as `long`.
+
+### Unit Test
+The pertinent unit test name is `findAPersonByID_Bug1701` (passes as below):
+
+```
+potlia@agni:/tmp/candidate-technical-assesment-movie-app  (bugfix/bug-1701)$ ./gradlew  test --tests net.gaggle.challenge.ChallengeApplicationTests.findAPersonByID_Bug1701
+
+> Task :test
+2022-08-18 12:09:17.629  INFO 11270 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2022-08-18 12:09:17.631  INFO 11270 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+BUILD SUCCESSFUL in 5s
+5 actionable tasks: 4 executed, 1 up-to-date
+potlia@agni:/tmp/candidate-technical-assesment-movie-app  (bugfix/bug-1701)$
+```
 
 ---------
 BUG-42
