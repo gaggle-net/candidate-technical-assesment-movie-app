@@ -93,12 +93,13 @@ public class FileRecordingAuditLog implements AuditLog {
         LOG.info("Flushing Audit Log");
         //Make a copy before we flush to disk for thread safety
         List<AuditInfo> itemsToFlushToDisk = new ArrayList<>(auditLog);
-        try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(targetFile))) {
-            new ArrayList<>(auditLog).stream()
+        try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(targetFile, true))) {
+            itemsToFlushToDisk.stream()
                     .forEach( (auditInfo) -> {
                         try {
                             osw.write(auditInfo.toString());
                             osw.write('\n');
+                            auditLog.remove(auditInfo);
                         } catch (IOException e) {
                             LOG.error("Error writing audit log to disk!", e);
                         }

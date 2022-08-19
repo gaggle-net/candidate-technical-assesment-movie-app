@@ -38,6 +38,12 @@ A restart seems to fix it for the next hour.  Right now we have a cron job resta
 
 We'd love to improve the uptime, what's cuasing this?
 
+### Issue
+The issue is with the `flushToDisk` operation. It is not clearing the `auditLog` ArrayList after writing the items to the disk. As the time progresses, the size of `auditLog` grows, causing memory leak and the server performance to go down. This poorly performing state of the server leads to a *no-load situation* on the database server, after all, the server is not processing requests fast enough to incur any load on the database server.
+
+The fix is to open the audit log file in append mode and flush the `auditInfo` items from the `auditLog` ArrayList write after having the `auditInfo` record written to the disk. Additionally, in the spirit it was originally introduced it would be a good idea to make use of the `itemsToFlushToDisk` ArrayList for flushing so that `auditLog` can be altered independently.
+
+It was a fun bug to investigate!
 
 ---------
 FEATURE-1138
