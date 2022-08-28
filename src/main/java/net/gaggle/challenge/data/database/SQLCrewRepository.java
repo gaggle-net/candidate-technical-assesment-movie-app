@@ -11,6 +11,7 @@ import net.gaggle.challenge.model.MovieRoleTuple;
 import net.gaggle.challenge.model.Person;
 import net.gaggle.challenge.model.PersonRoleTuple;
 import net.gaggle.challenge.model.Resume;
+import net.gaggle.challenge.model.Colleagues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,10 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
-
+    /**
+     * Query to get all colleagues records for one Person.
+     */
+    private static final String QUERY_PERSON_FOR_COLLEAGUE = "SELECT DISTINCT cast.person, colleague.person FROM crew AS cast LEFT JOIN crew AS colleague ON colleague.movie = cast.movie WHERE cast.person = :personid";
     /**
      * Where to go to deserialize Movie objects.
      */
@@ -87,7 +91,6 @@ public class SQLCrewRepository implements CrewRepository {
 
         final Set<MovieRoleTuple> jobs = new HashSet<>();
         result.setJobs(jobs);
-
 
         final Map<String, Object> varsMap = new HashMap<String, Object>();
         varsMap.put("personid", personId);
@@ -155,5 +158,43 @@ public class SQLCrewRepository implements CrewRepository {
 
         return result;
 
+    }
+
+    @Override
+    public Colleagues colleaguesFor(final Long personId) {
+		final Colleagues result = new Colleagues();
+
+        final Optional<Person> person = personRepository.findById(personId);
+        if (!person.isPresent()) {
+            return result;
+        }
+        result.setPerson(person.get());
+
+        final Set<Person> colleagues = new HashSet<>();
+        result.setColleagues(colleagues);
+
+        final Map<String, Object> varsMap = new HashMap<String, Object>();
+        varsMap.put("personid", personId);
+
+        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_PERSON_FOR_COLLEAGUE, varsMap);
+        while (rs.next()) {
+            try {
+				final int row = rs.getRow();
+				final long colleague = rs.getLong(2);
+                				
+                final Person current = new Person();
+                LOG.info("finding personid={}", colleague);
+                final Optional<Person> pers = personRepository.findById(colleague);
+				
+                if (pers.isPresent() && personId != colleague) {
+                    colleagues.add(pers.get());
+                }
+            } catch (Exception se) {
+                LOG.debug("failed to find person", se);
+                //move on to the next person
+            }
+        }
+
+		return result;
     }
 }

@@ -4,6 +4,7 @@ import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
 import net.gaggle.challenge.model.Resume;
+import net.gaggle.challenge.model.Colleagues;
 import net.gaggle.challenge.services.AuditLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,5 +88,21 @@ public class CrewController {
         });
     }
 
+    /**
+     * Returns a person's {@link Colleagues}, listing all of the {@link net.gaggle.challenge.model.Person}s they worked with.  
+     * response, instead of one for each movie, as would be the case with a collection of {@link Crew} obects.
+     * <p>
+     *
+     * @param personId the unique ID of the person we want to who they worked with.
+     * @return a fully-populated Colleagues structure.
+     */
+    @GetMapping("/person/{personId}/colleagues")
+    public Colleagues colleaugesFor(@PathVariable final Long personId) {
+        return auditLog.auditAction("/crew/person/by-id/colleagues", () -> {
+            LOG.info("here come all the movies for person {}", personId);
+            final Colleagues results = crewRepository.colleaguesFor(personId);
+            return results;
+        });
+    }
 
 }
