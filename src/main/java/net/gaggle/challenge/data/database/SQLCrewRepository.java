@@ -19,12 +19,7 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Repository
 public class SQLCrewRepository implements CrewRepository {
@@ -46,6 +41,10 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
+
+    private static final String QUERY_CREW_FOR_CO_STARS =   "select distinct person from crew where crew.movie in " +
+                                                            "(select movie from crew where crew.person = :personid) " +
+                                                            "and crew.person != :personid";
 
     /**
      * Where to go to deserialize Movie objects.
@@ -155,5 +154,34 @@ public class SQLCrewRepository implements CrewRepository {
 
         return result;
 
+    }
+
+    @Override
+    public List<Person> coStarsFor(final Long personId) {
+        final List<Person> result = new ArrayList<Person>();
+
+        final Optional<Person> person = personRepository.findById(personId);
+        if (!person.isPresent()) {
+            return result;
+        }
+
+        final Map<String, Object> varsMap = new HashMap<String, Object>();
+        varsMap.put("personid", personId);
+
+        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_CO_STARS, varsMap);
+        while (rs.next()) {
+            try {
+                long theCoStarId = rs.getLong("person");
+                LOG.info("Retrieved person with ID: " + theCoStarId);
+                Optional<Person> thePerson = personRepository.findById(theCoStarId);
+                if (thePerson.isPresent()) {
+                    result.add(thePerson.get());
+                }
+            } catch (Exception se) {
+                LOG.info("failed to retrieve person", se);
+            }
+        }
+
+        return result;
     }
 }

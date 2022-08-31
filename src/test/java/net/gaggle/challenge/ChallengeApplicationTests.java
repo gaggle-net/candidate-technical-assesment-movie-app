@@ -72,4 +72,10 @@ class ChallengeApplicationTests {
 				.andExpect(content().string(containsString("Return of the Jedi")));
 	}
 
+	@Test
+	public void findCoStarsById() throws Exception {
+		this.mockMvc.perform(get("/crew/costars/1")).andDo(print()).andExpect(status().isOk())
+				.andExpect(content().string(containsString("Carrie")));
+	}
+
 }

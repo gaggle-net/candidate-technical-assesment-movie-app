@@ -2,9 +2,11 @@ package net.gaggle.challenge.data;
 
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
+import net.gaggle.challenge.model.Person;
 import net.gaggle.challenge.model.Resume;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * A repository that knows about the crews for movies.
@@ -35,5 +37,12 @@ public interface CrewRepository {
      */
     Credits peopleFor(Long movieId);
 
+    /**
+     * returns the entire credits for one movie.
+     *
+     * @param movieId the movie we want to know about
+     * @return a Credits objects, including all people and their roles.
+     */
+    List<Person> coStarsFor(Long movieId);
 
 }
