@@ -41,7 +41,9 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
-
+    /**
+     * Query to get all actors that worked with a given actor.
+     */
     private static final String QUERY_CREW_FOR_CO_STARS =   "select distinct person from crew where crew.movie in " +
                                                             "(select movie from crew where crew.person = :personid) " +
                                                             "and crew.person != :personid";

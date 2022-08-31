@@ -38,10 +38,10 @@ public interface CrewRepository {
     Credits peopleFor(Long movieId);
 
     /**
-     * returns the entire credits for one movie.
+     * returns the people a person has worked with.
      *
-     * @param movieId the movie we want to know about
-     * @return a Credits objects, including all people and their roles.
+     * @param personId the person we want to know about
+     * @return a List of {@link Person} objects, including all people and their roles.
      */
     List<Person> coStarsFor(Long movieId);
 

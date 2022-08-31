@@ -89,6 +89,13 @@ public class CrewController {
         });
     }
 
+    /**
+     * Returns a list of {@link Person}, listing all the actors they worked with in their career
+     * <p>
+     *
+     * @param personId the unique ID of the person we want to know about.
+     * @return a List containing Person objects.
+     */
     @GetMapping("/costars/{personId}")
     public List<Person> coStarsFor(@PathVariable final long personId) {
         return auditLog.auditAction("/crew/coStars/by-id", () -> {
