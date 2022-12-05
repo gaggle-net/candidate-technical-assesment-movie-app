@@ -42,6 +42,7 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Person.
      */
     private static final String QUERY_CREW_FOR_PERSON = "select * from crew where crew.person = :personid";
+    // private static final String QUERY_CREW_FOR_PERSON = "select * from crew";
     /**
      * Query to get all crew records for one Movie.
      */
@@ -94,10 +95,13 @@ public class SQLCrewRepository implements CrewRepository {
 
 
         final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_FOR_PERSON, varsMap);
+        
         while (rs.next()) {
             try {
                 final MovieRoleTuple current = new MovieRoleTuple();
-                final long movieId = rs.getInt("movie");
+                // final long movieId = rs.getInt("movie");
+                // it's not an int, it's a long
+                final long movieId = rs.getLong("movie");
                 LOG.info("finding movieid={}", movieId);
                 final Optional<Movie> movie = movieRepository.findById(movieId);
 
@@ -105,12 +109,13 @@ public class SQLCrewRepository implements CrewRepository {
                     current.setMovie(movie.get());
                     current.setRole(CrewRole.valueOf(rs.getString("role")));
                     jobs.add(current);
-                }
+                } 
             } catch (Exception se) {
                 LOG.debug("failed to find movie", se);
                 //move on to the next movie
             }
         }
+        
 
         return result;
     }
