@@ -27,19 +27,6 @@ QA confirmed by checking `GET /crew/person/1`
 
 
 ---------
-BUG-42
----------
-
-Help!  Our Movie App is super popular, it's been running great, but after about an hour under load it starts giving slow responses and then stops serving altogether.
-
-The database load is nill
-
-A restart seems to fix it for the next hour.  Right now we have a cron job restarting it every half hour.
-
-We'd love to improve the uptime, what's cuasing this?
-
-
----------
 FEATURE-1138
 ---------
 

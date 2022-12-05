@@ -19,12 +19,7 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Repository
 public class SQLCrewRepository implements CrewRepository {
@@ -115,6 +110,53 @@ public class SQLCrewRepository implements CrewRepository {
         return result;
     }
 
+    @Override
+    public Collection<Person> personsFor(final Long personId) {
+        final Collection<Person> result = new HashSet<Person>();
+
+        final Optional<Person> person = personRepository.findById(personId);
+        if (!person.isPresent()) {
+            return result;
+        }
+        final Resume resume = this.moviesFor(personId);
+        final MovieRoleTuple[] jobs = resume.getJobs().toArray(new MovieRoleTuple[resume.getJobs().size()]);
+        final ArrayList<MovieRoleTuple> _jobs = new ArrayList<MovieRoleTuple>();
+
+        for (int i = 0; i < jobs.length; i++) {
+            boolean isValid = true;
+            for (MovieRoleTuple job: _jobs) {
+                if (job.getMovie().getId() == jobs[i].getMovie().getId()) {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid) {
+                _jobs.add(jobs[i]);
+            }
+        }
+
+        for (int i = 0; i< _jobs.size(); i++) {
+            final Credits credits = this.peopleFor(_jobs.get(i).getMovie().getId());
+            final PersonRoleTuple[] crews = credits.getCrew().toArray(new PersonRoleTuple[credits.getCrew().size()]);
+            for (int j = 0; j < crews.length; j++) {
+                boolean isValidPerson = !(personId == crews[j].getPerson().getId());
+                if (isValidPerson) {
+                    for (Person _person: result) {
+                        if (_person.getId() == crews[j].getPerson().getId()) {
+                            isValidPerson = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (isValidPerson)
+                    result.add(crews[j].getPerson());
+            }
+        }
+
+        return result;
+    }
     @Override
     public Credits peopleFor(final Long movieId) {
 

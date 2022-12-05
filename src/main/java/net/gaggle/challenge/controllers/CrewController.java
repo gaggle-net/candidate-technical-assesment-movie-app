@@ -3,6 +3,7 @@ package net.gaggle.challenge.controllers;
 import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
+import net.gaggle.challenge.model.Person;
 import net.gaggle.challenge.model.Resume;
 import net.gaggle.challenge.services.AuditLog;
 import org.slf4j.Logger;
@@ -84,6 +85,17 @@ public class CrewController {
             LOG.info("here come all the movies for person {}", personId);
             final Resume results = crewRepository.moviesFor(personId);
             return results;
+        });
+    }
+    /**
+     *
+     * @return a List of Person objects.
+     */
+    @GetMapping("/person/{personId}/persons")
+    public Collection<Person> personsFor(@PathVariable final Long personId) {
+        return auditLog.auditAction("/crew/person/by-id/persons", () -> {
+            final Collection<Person> results = crewRepository.personsFor(personId);
+            return (results);
         });
     }
 
