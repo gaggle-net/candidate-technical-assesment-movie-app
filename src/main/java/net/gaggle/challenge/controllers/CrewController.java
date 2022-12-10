@@ -3,6 +3,7 @@ package net.gaggle.challenge.controllers;
 import net.gaggle.challenge.data.CrewRepository;
 import net.gaggle.challenge.model.Credits;
 import net.gaggle.challenge.model.Crew;
+import net.gaggle.challenge.model.Person;
 import net.gaggle.challenge.model.Resume;
 import net.gaggle.challenge.services.AuditLog;
 import org.slf4j.Logger;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Rest controller for crew-related questions.
@@ -83,6 +86,15 @@ public class CrewController {
         return auditLog.auditAction("/crew/person/by-id", () -> {
             LOG.info("here come all the movies for person {}", personId);
             final Resume results = crewRepository.moviesFor(personId);
+            return results;
+        });
+    }
+    
+    @GetMapping("/person/{personId}/workedwith")
+    public Collection<String> workedWith(@PathVariable final Long personId) {
+        return auditLog.auditAction("/people/workedwith", () -> {
+            final Collection<String> results = crewRepository.crewWorkedWith(personId);
+            LOG.info("returning allPeople={}", results.size());
             return results;
         });
     }

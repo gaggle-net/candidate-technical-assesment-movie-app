@@ -19,6 +19,8 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +48,15 @@ public class SQLCrewRepository implements CrewRepository {
      * Query to get all crew records for one Movie.
      */
     private static final String QUERY_CREW_FOR_MOVIE = "select * from crew where crew.movie = :movieid";
+    
+    /**
+     * Query to get all crew and cast worked with throughout the career.
+     */
+    private static final String QUERY_CREW_CAST_FOR_PERSON = "select distinct p.id, p.name from crew c "
+    		+ "join (select m.id from crew c1 join movie m on m.id = c1.movie where person = :personId) t "
+    		+ "on t.id = c.movie " 
+    		+ "join person p on p.id = c.person";
+    
 
     /**
      * Where to go to deserialize Movie objects.
@@ -157,4 +168,36 @@ public class SQLCrewRepository implements CrewRepository {
         return result;
 
     }
+
+
+	@Override
+	public Collection<String> crewWorkedWith(Long personId) {
+
+	       
+        final Map<String, Object> varsMap = new HashMap<String, Object>();
+        varsMap.put("personId", personId);
+
+
+        final SqlRowSet rs = jdbcTemplate.queryForRowSet(QUERY_CREW_CAST_FOR_PERSON, varsMap);
+        Collection<String> result = new HashSet<>();
+        while (rs.next()) {
+            try {
+            	
+            	// ignore the current personId
+            	final Long pId = rs.getLong("id");
+            	if (pId.equals(personId)) {
+            		continue;
+            	}
+            	
+                final String personName = rs.getString("name");
+                result.add(personName);
+                
+            } catch (Exception se) {
+                LOG.debug("failed to find person", se);
+                //move on to the next person
+            }
+        }
+
+        return result;
+	}
 }
