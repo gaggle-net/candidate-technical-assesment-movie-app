@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Simple implementation that periodically flushes the audit logs to a disk file.  ( Yeah it's sorta lame we're
@@ -93,17 +94,21 @@ public class FileRecordingAuditLog implements AuditLog {
         LOG.info("Flushing Audit Log");
         //Make a copy before we flush to disk for thread safety
         List<AuditInfo> itemsToFlushToDisk = new ArrayList<>(auditLog);
+        auditLog = new LinkedBlockingQueue<>();
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(targetFile))) {
-            new ArrayList<>(auditLog).stream()
-                    .forEach( (auditInfo) -> {
-                        try {
-                            osw.write(auditInfo.toString());
-                            osw.write('\n');
-                        } catch (IOException e) {
-                            LOG.error("Error writing audit log to disk!", e);
-                        }
-                    });
-
+        	
+            String auditDetails = new ArrayList<>(itemsToFlushToDisk)
+            		.stream()
+            		.map(AuditInfo::toString)
+            		.collect(Collectors.joining("\n"));
+            
+            try {
+                osw.write(auditDetails);
+                osw.write('\n');
+            } catch (IOException e) {
+                LOG.error("Error writing audit log to disk!", e);
+                auditLog.addAll(itemsToFlushToDisk);
+            }
         }
 
     }

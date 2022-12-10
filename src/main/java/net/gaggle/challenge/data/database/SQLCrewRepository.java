@@ -97,7 +97,8 @@ public class SQLCrewRepository implements CrewRepository {
         while (rs.next()) {
             try {
                 final MovieRoleTuple current = new MovieRoleTuple();
-                final long movieId = rs.getInt("movie");
+//                final long movieId = rs.getInt("movie");
+                final long movieId = rs.getLong("movie");
                 LOG.info("finding movieid={}", movieId);
                 final Optional<Movie> movie = movieRepository.findById(movieId);
 
